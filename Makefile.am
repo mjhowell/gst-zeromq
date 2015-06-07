@@ -1,0 +1,3 @@
+SUBDIRS = src
+
+EXTRA_DIST = autogen.sh AUTHORS COPYING NEWS README ChangeLog
