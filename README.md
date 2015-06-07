@@ -26,11 +26,11 @@ In another terminal, start a "client":
 
 When you type in a line of text at the server, it will show at the client.
 
-Sure, you can do the same thing with, say, the tcpserversink and tcpclientsrc elements in gst-plugins-base.
+Sure, you can do the same thing with, say, the tcpserversink and tcpclientsrc elements in gst-plugins-base. We're just getting started.
 
 ## License
 
-This project uses the GNU LGPL, for best compatibility with the rest of the GStreamer world.
+This project uses the GNU LGPL. See COPYING and COPYING.LIB.
 
 ## TODO
 * move zmq context into zeromq class (one context for all instances)
