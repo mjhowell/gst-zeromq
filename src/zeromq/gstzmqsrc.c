@@ -205,6 +205,8 @@ gst_zmq_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
   
   gst_buffer_unmap(*outbuf, &map);
   
+  zmq_msg_close(&msg);
+
   GST_LOG_OBJECT (src, "delivered a buffer of size %" G_GSIZE_FORMAT " bytes", msg_size);  
   
   ret = GST_FLOW_OK;
