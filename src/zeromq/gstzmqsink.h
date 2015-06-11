@@ -53,7 +53,7 @@ struct _GstZmqSink {
   GstBaseSink parent;
 
   // properties
-  char *endpoint;
+  gchar *endpoint;
   gboolean bind;
   
   // zmq stuff

@@ -34,6 +34,7 @@
  * </refsect2>
  */
 
+#include <errno.h>
 #include <string.h> // for memcpy
 
 #ifdef HAVE_CONFIG_H
@@ -86,10 +87,9 @@ gst_zmq_sink_class_init (GstZmqSinkClass * klass)
   gstelement_class = (GstElementClass *) klass;
   gstbasesink_class = (GstBaseSinkClass *) klass;
 
-  gobject_class->set_property = gst_zmq_sink_set_property;
-  gobject_class->get_property = gst_zmq_sink_get_property;
-  gobject_class->finalize = gst_zmq_sink_finalize;
-
+  gobject_class->set_property = GST_DEBUG_FUNCPTR (gst_zmq_sink_set_property);
+  gobject_class->get_property = GST_DEBUG_FUNCPTR (gst_zmq_sink_get_property);
+  gobject_class->finalize = GST_DEBUG_FUNCPTR (gst_zmq_sink_finalize);
 
   g_object_class_install_property (gobject_class, PROP_ENDPOINT,
       g_param_spec_string ("endpoint", "Endpoint",
@@ -119,7 +119,7 @@ gst_zmq_sink_class_init (GstZmqSinkClass * klass)
 static void
 gst_zmq_sink_init (GstZmqSink * this)
 {
-  this->endpoint = ZMQ_DEFAULT_ENDPOINT_SERVER;
+  this->endpoint = g_strdup(ZMQ_DEFAULT_ENDPOINT_SERVER);
   this->bind = ZMQ_DEFAULT_BIND_SINK;
   this->context = zmq_ctx_new();
 }
@@ -146,7 +146,9 @@ gst_zmq_sink_set_property (GObject * object, guint prop_id,
         g_warning ("endpoint property cannot be NULL");
         break;
       }
-      g_free (sink->endpoint);
+      if (sink->endpoint) {
+        g_free (sink->endpoint);
+      }
       sink->endpoint = g_strdup (g_value_get_string (value));
       break;
     case PROP_BIND:
@@ -184,6 +186,8 @@ static GstFlowReturn
 gst_zmq_sink_render (GstBaseSink * basesink, GstBuffer * buffer)
 {
 
+  GstFlowReturn retval = GST_FLOW_OK;
+
   GstZmqSink *sink;
   GstMapInfo map;
   
@@ -196,23 +200,33 @@ gst_zmq_sink_render (GstBaseSink * basesink, GstBuffer * buffer)
   if (map.size > 0 && map.data != NULL) {
     zmq_msg_t msg;
     int rc = zmq_msg_init_size(&msg, map.size);
-    g_assert(rc==0);
-    memcpy(zmq_msg_data(&msg), map.data, map.size);
-    rc = zmq_msg_send(&msg, sink->socket, 0);
-    g_assert(rc==map.size);
+    if (rc) {
+      GST_ELEMENT_ERROR(sink, RESOURCE, FAILED, ("zmq_msg_init_size() failed with error code %d [%s]", errno, zmq_strerror(errno)), NULL);
+      retval = GST_FLOW_ERROR;
+    } else {
+        memcpy(zmq_msg_data(&msg), map.data, map.size);
+
+        rc = zmq_msg_send(&msg, sink->socket, 0);
+        if (rc != map.size) {
+          GST_ELEMENT_ERROR(sink, RESOURCE, WRITE, ("zmq_msg_send() failed with error code %d [%s]", errno, zmq_strerror(errno)), NULL);
+          zmq_msg_close(&msg);
+          retval = GST_FLOW_ERROR;
+        }
+    }
   }
   
   gst_buffer_unmap (buffer, &map);
 
-  return GST_FLOW_OK;
+  return retval;
 
 }
 
 static gboolean
 gst_zmq_sink_start (GstBaseSink * basesink)
 {
+  gboolean retval = TRUE;
+
   GstZmqSink *sink;
-  //Gerror *err = NULL;
   
   sink = GST_ZMQ_SINK (basesink);
   
@@ -221,32 +235,46 @@ gst_zmq_sink_start (GstBaseSink * basesink)
   GST_DEBUG_OBJECT (sink, "starting");  
   
   sink->socket = zmq_socket(sink->context, ZMQ_PUB);
-  g_assert(sink->socket);
-  
-  if (sink->bind) {
-    GST_DEBUG("binding to endpoint %s", sink->endpoint);
-    rc = zmq_bind(sink->socket, sink->endpoint);
+  if (!sink->socket) {
+    GST_ELEMENT_ERROR(sink, RESOURCE, OPEN_READ_WRITE, ("zmq_socket() failed with error code %d [%s]", errno, zmq_strerror(errno)), NULL);
   } else {
-    GST_DEBUG("connecting to endpoint %s", sink->endpoint);
-    rc = zmq_connect(sink->socket, sink->endpoint);
+      if (sink->bind) {
+        GST_DEBUG("binding to endpoint %s", sink->endpoint);
+        rc = zmq_bind(sink->socket, sink->endpoint);
+        if (rc) {
+          GST_ELEMENT_ERROR(sink, RESOURCE, OPEN_READ_WRITE, ("zmq_bind() to endpoint \"%s\" failed with error code %d [%s]", sink->endpoint, errno, zmq_strerror(errno)), NULL);
+          retval = FALSE;
+        }
+      } else {
+        GST_DEBUG("connecting to endpoint %s", sink->endpoint);
+        rc = zmq_connect(sink->socket, sink->endpoint);
+        if (rc) {
+          GST_ELEMENT_ERROR(sink, RESOURCE, OPEN_READ_WRITE, ("zmq_connect() to endpoint \"%s\" failed with error code %d [%s]", sink->endpoint, errno, zmq_strerror(errno)), NULL);
+          retval = FALSE;
+        }
+      }
   }
-  g_assert (rc==0);
   
-  return TRUE;
-  
+  return retval;
 }
 
 static gboolean
 gst_zmq_sink_stop (GstBaseSink * basesink)
 {
+  gboolean retval = TRUE;
+
   GstZmqSink *sink;
-  //Gerror *err = NULL;
 
   sink = GST_ZMQ_SINK (basesink);
   
   GST_DEBUG_OBJECT (sink, "stopping");
-  
-  zmq_close(sink->socket);
 
-  return TRUE;
+  int rc = zmq_close(sink->socket);
+  
+  if (rc) {
+    GST_ELEMENT_WARNING(sink, RESOURCE, CLOSE, ("zmq_close() failed with error code %d [%s]", errno, strerror(errno)), NULL);
+    retval = FALSE;
+  }
+
+  return retval;
 }

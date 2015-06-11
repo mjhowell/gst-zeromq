@@ -54,7 +54,7 @@ struct _GstZmqSrc {
   GstPushSrc element;
 
   // properties
-  char *endpoint;
+  gchar *endpoint;
   gboolean bind;
   
   // zmq stuff

@@ -33,7 +33,8 @@ Sure, you can do the same thing with, say, the tcpserversink and tcpclientsrc el
 This project uses the GNU LGPL. See COPYING and COPYING.LIB.
 
 ## TODO
-* move zmq context into zeromq class (one context for all instances)
+* move zmq context into class (one context for all instances)?
 * add search for zeromq package to configure.ac
 * destroy zmq context on release
-* nice gst error handling instead of asserts
+* fix src getting stuck in create() after stopping pipeline.
+* zero copy possible, rather than memcpy() between mapped GstBuffer and zmq_msg_t?
