@@ -37,7 +37,7 @@
  */
 
 #include <errno.h>
-#include <string.h> // for memcpy
+#include <string.h>             // for memcpy
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -66,14 +66,14 @@ G_DEFINE_TYPE (GstZmqSrc, gst_zmq_src, GST_TYPE_PUSH_SRC);
 
 static void gst_zmq_src_finalize (GObject * gobject);
 
-static GstCaps *gst_zmq_src_getcaps (GstBaseSrc * psrc,
-    GstCaps * filter);
+static GstCaps *gst_zmq_src_getcaps (GstBaseSrc * psrc, GstCaps * filter);
 
 static GstFlowReturn gst_zmq_src_create (GstPushSrc * psrc,
     GstBuffer ** outbuf);
 static gboolean gst_zmq_src_stop (GstBaseSrc * bsrc);
 static gboolean gst_zmq_src_start (GstBaseSrc * bsrc);
-static GstStateChangeReturn gst_zmq_src_change_state (GstElement * element, GstStateChange transition);
+static GstStateChangeReturn gst_zmq_src_change_state (GstElement * element,
+    GstStateChange transition);
 
 static void gst_zmq_src_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec);
@@ -93,18 +93,19 @@ gst_zmq_src_class_init (GstZmqSrcClass * klass)
   gstbasesrc_class = (GstBaseSrcClass *) klass;
   gstpush_src_class = (GstPushSrcClass *) klass;
 
-  gobject_class->set_property = GST_DEBUG_FUNCPTR(gst_zmq_src_set_property);
-  gobject_class->get_property = GST_DEBUG_FUNCPTR(gst_zmq_src_get_property);
-  gobject_class->finalize = GST_DEBUG_FUNCPTR(gst_zmq_src_finalize);
+  gobject_class->set_property = GST_DEBUG_FUNCPTR (gst_zmq_src_set_property);
+  gobject_class->get_property = GST_DEBUG_FUNCPTR (gst_zmq_src_get_property);
+  gobject_class->finalize = GST_DEBUG_FUNCPTR (gst_zmq_src_finalize);
 
   g_object_class_install_property (gobject_class, PROP_ENDPOINT,
       g_param_spec_string ("endpoint", "Endpoint",
-          "ZeroMQ endpoint from which to receive buffers", ZMQ_DEFAULT_ENDPOINT_CLIENT,
+          "ZeroMQ endpoint from which to receive buffers",
+          ZMQ_DEFAULT_ENDPOINT_CLIENT,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (gobject_class, PROP_BIND,
-          g_param_spec_boolean ("bind", "Bind", "If true, bind to the endpoint (be the \"server\")",
-          ZMQ_DEFAULT_BIND_SRC,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+      g_param_spec_boolean ("bind", "Bind",
+          "If true, bind to the endpoint (be the \"server\")",
+          ZMQ_DEFAULT_BIND_SRC, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&srctemplate));
@@ -114,31 +115,30 @@ gst_zmq_src_class_init (GstZmqSrcClass * klass)
       "Receive data on ZeroMQ SUB socket",
       "Mark J. Howell <m0ppy at hypgnosys dot org>");
 
-  gstelement_class->change_state = GST_DEBUG_FUNCPTR(gst_zmq_src_change_state);
+  gstelement_class->change_state = GST_DEBUG_FUNCPTR (gst_zmq_src_change_state);
 
-  gstbasesrc_class->get_caps = GST_DEBUG_FUNCPTR(gst_zmq_src_getcaps);
-  gstbasesrc_class->start = GST_DEBUG_FUNCPTR(gst_zmq_src_start);
-  gstbasesrc_class->stop = GST_DEBUG_FUNCPTR(gst_zmq_src_stop);
+  gstbasesrc_class->get_caps = GST_DEBUG_FUNCPTR (gst_zmq_src_getcaps);
+  gstbasesrc_class->start = GST_DEBUG_FUNCPTR (gst_zmq_src_start);
+  gstbasesrc_class->stop = GST_DEBUG_FUNCPTR (gst_zmq_src_stop);
 
-  gstpush_src_class->create = GST_DEBUG_FUNCPTR(gst_zmq_src_create);
+  gstpush_src_class->create = GST_DEBUG_FUNCPTR (gst_zmq_src_create);
 
-  GST_DEBUG_CATEGORY_INIT (zmqsrc_debug, "zmqsrc", 0,
-      "ZeroMQ Source");
+  GST_DEBUG_CATEGORY_INIT (zmqsrc_debug, "zmqsrc", 0, "ZeroMQ Source");
 }
 
 static void
 gst_zmq_src_init (GstZmqSrc * this)
 {
-  this->endpoint = g_strdup(ZMQ_DEFAULT_ENDPOINT_CLIENT);
+  this->endpoint = g_strdup (ZMQ_DEFAULT_ENDPOINT_CLIENT);
   this->bind = ZMQ_DEFAULT_BIND_SRC;
-  this->context = zmq_ctx_new();
+  this->context = zmq_ctx_new ();
 }
 
 static void
 gst_zmq_src_finalize (GObject * gobject)
 {
   GstZmqSrc *this = GST_ZMQ_SRC (gobject);
-  zmq_ctx_destroy(this->context);
+  zmq_ctx_destroy (this->context);
   G_OBJECT_CLASS (parent_class)->finalize (gobject);
 }
 
@@ -163,21 +163,23 @@ gst_zmq_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
   GstZmqSrc *src;
   GstFlowReturn retval = GST_FLOW_OK;
   GstMapInfo map;
-  
+
   src = GST_ZMQ_SRC (psrc);
 
   GST_LOG_OBJECT (src, "was asked for a buffer");
-  
+
   zmq_msg_t msg;
-  int rc = zmq_msg_init(&msg);
+  int rc = zmq_msg_init (&msg);
   if (rc) {
-    GST_ELEMENT_ERROR(src, RESOURCE, FAILED, ("zmq_msg_init() failed with error code %d [%s]", errno, zmq_strerror(errno)), NULL);
+    GST_ELEMENT_ERROR (src, RESOURCE, FAILED,
+        ("zmq_msg_init() failed with error code %d [%s]", errno,
+            zmq_strerror (errno)), NULL);
     retval = GST_FLOW_ERROR;
     goto done;
   }
-  
-  while(1) {
-    rc = zmq_msg_recv(&msg, src->socket, 0);
+
+  while (1) {
+    rc = zmq_msg_recv (&msg, src->socket, 0);
     if ((rc < 0) && (EAGAIN == errno)) {
       GST_LOG_OBJECT (src, "No message available on socket");
       continue;
@@ -185,7 +187,7 @@ gst_zmq_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
       break;
     }
   }
-  
+
   if (rc < 0) {
     if (ENOTSOCK == errno) {
       GST_DEBUG_OBJECT (src, "Connection closed");
@@ -194,25 +196,28 @@ gst_zmq_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
       GST_LOG_OBJECT (src, "No message available on socket");
       g_print("w");*/
     } else {
-      GST_ELEMENT_ERROR(src, RESOURCE, READ, ("zmq_msg_recv() failed with error code %d [%s]", errno, zmq_strerror(errno)), NULL);
+      GST_ELEMENT_ERROR (src, RESOURCE, READ,
+          ("zmq_msg_recv() failed with error code %d [%s]", errno,
+              zmq_strerror (errno)), NULL);
       retval = GST_FLOW_ERROR;
     }
     *outbuf = NULL;
-    zmq_msg_close(&msg);
+    zmq_msg_close (&msg);
     goto done;
   }
-  size_t msg_size = zmq_msg_size(&msg);
-  
-  *outbuf = gst_buffer_new_and_alloc(msg_size);
-  gst_buffer_map(*outbuf, &map, GST_MAP_READWRITE);
-  
-  memcpy(map.data, zmq_msg_data(&msg), msg_size);
-  
-  gst_buffer_unmap(*outbuf, &map);
-  
-  zmq_msg_close(&msg);
+  size_t msg_size = zmq_msg_size (&msg);
 
-  GST_LOG_OBJECT (src, "delivered a buffer of size %" G_GSIZE_FORMAT " bytes", msg_size);  
+  *outbuf = gst_buffer_new_and_alloc (msg_size);
+  gst_buffer_map (*outbuf, &map, GST_MAP_READWRITE);
+
+  memcpy (map.data, zmq_msg_data (&msg), msg_size);
+
+  gst_buffer_unmap (*outbuf, &map);
+
+  zmq_msg_close (&msg);
+
+  GST_LOG_OBJECT (src, "delivered a buffer of size %" G_GSIZE_FORMAT " bytes",
+      msg_size);
 done:
   return retval;
 }
@@ -265,8 +270,8 @@ static gboolean
 gst_zmq_src_start (GstBaseSrc * bsrc)
 {
   GstZmqSrc *src = GST_ZMQ_SRC (bsrc);
-  
-  GST_DEBUG_OBJECT (src, "starting");  
+
+  GST_DEBUG_OBJECT (src, "starting");
 
   return TRUE;
 }
@@ -277,72 +282,87 @@ gst_zmq_src_stop (GstBaseSrc * bsrc)
   GstZmqSrc *src;
 
   src = GST_ZMQ_SRC (bsrc);
-  
+
   GST_DEBUG_OBJECT (src, "stopping");
 
   return TRUE;
 }
 
 static gboolean
-gst_zmq_src_open (GstZmqSrc * src) {
+gst_zmq_src_open (GstZmqSrc * src)
+{
 
   gboolean retval = TRUE;
 
   int rc;
 
-  src->socket = zmq_socket(src->context, ZMQ_SUB);
+  src->socket = zmq_socket (src->context, ZMQ_SUB);
   if (!src->socket) {
-    GST_ELEMENT_ERROR(src, RESOURCE, OPEN_READ_WRITE, ("zmq_socket() failed with error code %d [%s]", errno, zmq_strerror(errno)), NULL);
+    GST_ELEMENT_ERROR (src, RESOURCE, OPEN_READ_WRITE,
+        ("zmq_socket() failed with error code %d [%s]", errno,
+            zmq_strerror (errno)), NULL);
     retval = FALSE;
   }
 
   if (retval) {
-      if (src->bind) {
-        GST_DEBUG("binding to endpoint %s", src->endpoint);
-        rc = zmq_bind(src->socket, src->endpoint);
-        if (rc) {
-          GST_ELEMENT_ERROR(src, RESOURCE, OPEN_READ_WRITE, ("zmq_bind() to endpoint \"%s\" failed with error code %d [%s]", src->endpoint, errno, zmq_strerror(errno)), NULL);
-          retval = FALSE;
-        }
-      } else {
-        GST_DEBUG("connecting to endpoint %s", src->endpoint);
-        rc = zmq_connect(src->socket, src->endpoint);
-        if (rc) {
-          GST_ELEMENT_ERROR(src, RESOURCE, OPEN_READ_WRITE, ("zmq_connect() to endpoint \"%s\" failed with error code %d [%s]", src->endpoint, errno, zmq_strerror(errno)), NULL);
-          retval = FALSE;
-        }
-      }
-    }
-
-  if (retval) {
-      rc = zmq_setsockopt(src->socket, ZMQ_SUBSCRIBE, "", 0);
+    if (src->bind) {
+      GST_DEBUG ("binding to endpoint %s", src->endpoint);
+      rc = zmq_bind (src->socket, src->endpoint);
       if (rc) {
-        GST_ELEMENT_ERROR(src, RESOURCE, OPEN_READ_WRITE, ("zmq_setsockopt() failed with error code %d [%s]", errno, zmq_strerror(errno)), NULL);
+        GST_ELEMENT_ERROR (src, RESOURCE, OPEN_READ_WRITE,
+            ("zmq_bind() to endpoint \"%s\" failed with error code %d [%s]",
+                src->endpoint, errno, zmq_strerror (errno)), NULL);
         retval = FALSE;
       }
+    } else {
+      GST_DEBUG ("connecting to endpoint %s", src->endpoint);
+      rc = zmq_connect (src->socket, src->endpoint);
+      if (rc) {
+        GST_ELEMENT_ERROR (src, RESOURCE, OPEN_READ_WRITE,
+            ("zmq_connect() to endpoint \"%s\" failed with error code %d [%s]",
+                src->endpoint, errno, zmq_strerror (errno)), NULL);
+        retval = FALSE;
+      }
+    }
   }
 
   if (retval) {
-      int timeout_ms = 1000;
-      rc = zmq_setsockopt(src->socket, ZMQ_RCVTIMEO, &timeout_ms, sizeof(timeout_ms));
-      if (rc) {
-        GST_ELEMENT_ERROR(src, RESOURCE, OPEN_READ_WRITE, ("zmq_setsockopt() failed with error code %d [%s]", errno, zmq_strerror(errno)), NULL);
-        retval = FALSE;
-      }
+    rc = zmq_setsockopt (src->socket, ZMQ_SUBSCRIBE, "", 0);
+    if (rc) {
+      GST_ELEMENT_ERROR (src, RESOURCE, OPEN_READ_WRITE,
+          ("zmq_setsockopt() failed with error code %d [%s]", errno,
+              zmq_strerror (errno)), NULL);
+      retval = FALSE;
+    }
+  }
+
+  if (retval) {
+    int timeout_ms = 1000;
+    rc = zmq_setsockopt (src->socket, ZMQ_RCVTIMEO, &timeout_ms,
+        sizeof (timeout_ms));
+    if (rc) {
+      GST_ELEMENT_ERROR (src, RESOURCE, OPEN_READ_WRITE,
+          ("zmq_setsockopt() failed with error code %d [%s]", errno,
+              zmq_strerror (errno)), NULL);
+      retval = FALSE;
+    }
   }
 
   return retval;
 }
 
 static gboolean
-gst_zmq_src_close (GstZmqSrc * src) {
+gst_zmq_src_close (GstZmqSrc * src)
+{
 
   gboolean retval = TRUE;
 
-  int rc = zmq_close(src->socket);
+  int rc = zmq_close (src->socket);
 
   if (rc) {
-    GST_ELEMENT_WARNING(src, RESOURCE, CLOSE, ("zmq_close() failed with error code %d [%s]", errno, strerror(errno)), NULL);
+    GST_ELEMENT_WARNING (src, RESOURCE, CLOSE,
+        ("zmq_close() failed with error code %d [%s]", errno, strerror (errno)),
+        NULL);
     retval = FALSE;
   }
 
@@ -390,4 +410,3 @@ failure:
     return result;
   }
 }
-

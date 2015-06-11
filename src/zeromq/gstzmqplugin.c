@@ -30,8 +30,7 @@ GST_DEBUG_CATEGORY (zmq_debug);
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
-  if (!gst_element_register (plugin, "zmqsrc", GST_RANK_NONE,
-          GST_TYPE_ZMQ_SRC))
+  if (!gst_element_register (plugin, "zmqsrc", GST_RANK_NONE, GST_TYPE_ZMQ_SRC))
     return FALSE;
 
   if (!gst_element_register (plugin, "zmqsink", GST_RANK_NONE,
@@ -47,4 +46,5 @@ GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
     zmq,
     "Transfer data via ZeroMQ",
-    plugin_init, VERSION, GST_LICENSE, "gst-zeromq", "http://github.com/mjhowell/gst-zeromq")
+    plugin_init, VERSION, GST_LICENSE, "gst-zeromq",
+    "http://github.com/mjhowell/gst-zeromq")
