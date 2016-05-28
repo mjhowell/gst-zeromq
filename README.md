@@ -4,7 +4,7 @@
 
 gst-zeromq provides [GStreamer](http://gstreamer.freedesktop.org) elements for moving data with [ZeroMQ](http://zeromq.org).
 
-gst-zeromq is written in C for GStreamer 1.x. 
+gst-zeromq is written in C for GStreamer 1.x.
 
 At present it has been tested with:
 
@@ -13,6 +13,45 @@ At present it has been tested with:
 * ZeroMQ 4.1.1 (but any version back to 2.2.0 should work)
 
 Git repo at http://github.com/mjhowell/gst-zeromq
+
+## Build It
+
+On Ubuntu, you'll need at least build-essential and libgstreamer1.0-dev installed. Then, to build:
+
+    $ ./autogen.sh
+
+    $ make
+
+The libs will be built in src/zeromq/.libs. To test them in place without installing, run the gst-zeromq-vars script:
+
+    $ . gst-zeromq-vars.sh
+
+Now see if GStreamer can find the libs and catalog the elements:
+
+    $ gst-inspect-1.0 zmqsrc
+
+You should see something like this:
+
+```
+Factory Details:
+Rank                     none (0)
+Long-name                ZeroMQ source
+Klass                    Source/Network
+Description              Receive data on ZeroMQ SUB socket
+
+...
+
+do-timestamp        : Apply current stream time to buffers
+                      flags: readable, writable
+                      Boolean. Default: false
+endpoint            : ZeroMQ endpoint from which to receive buffers
+                      flags: readable, writable
+                      String. Default: "tcp://localhost:5556"
+bind                : If true, bind to the endpoint (be the "server")
+                      flags: readable, writable
+                      Boolean. Default: false
+
+```
 
 ## Try It
 
