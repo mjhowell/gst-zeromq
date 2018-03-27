@@ -18,6 +18,12 @@ It has been developed and tested with:
 
 Git repo at http://github.com/mjhowell/gst-zeromq
 
+## Required packages (for Ubuntu, as of Mar 2018)
+Install the required packages as:
+```
+$ sudo apt-get install dh-autoreconf libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libzmq3-dev
+```
+
 ## Build It
 
 On Ubuntu, you'll need at least build-essential and libgstreamer1.0-dev installed. Then, to build:
