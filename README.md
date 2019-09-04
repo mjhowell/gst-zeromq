@@ -51,6 +51,9 @@ Description              Receive data on ZeroMQ SUB socket
 
 ...
 
+is-live             : If true, act as a live source
+                      flags: readable, writable
+                      Boolean. Default: true
 do-timestamp        : Apply current stream time to buffers
                       flags: readable, writable
                       Boolean. Default: false

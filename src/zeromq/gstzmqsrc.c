@@ -58,7 +58,8 @@ enum
 {
   PROP_0,
   PROP_ENDPOINT,
-  PROP_BIND
+  PROP_BIND,
+  PROP_IS_LIVE
 };
 
 #define gst_zmq_src_parent_class parent_class
@@ -106,6 +107,10 @@ gst_zmq_src_class_init (GstZmqSrcClass * klass)
       g_param_spec_boolean ("bind", "Bind",
           "If true, bind to the endpoint (be the \"server\")",
           ZMQ_DEFAULT_BIND_SRC, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (gobject_class, PROP_IS_LIVE,
+      g_param_spec_boolean ("is-live", "Is this a live source",
+        "True if the element cannot produce data in PAUSED", TRUE,
+        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&srctemplate));
@@ -240,6 +245,10 @@ gst_zmq_src_set_property (GObject * object, guint prop_id,
     case PROP_BIND:
       zmqsrc->bind = g_value_get_boolean (value);
       break;
+    case PROP_IS_LIVE:
+      gst_base_src_set_live (GST_BASE_SRC (object),
+              g_value_get_boolean (value));
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -259,6 +268,9 @@ gst_zmq_src_get_property (GObject * object, guint prop_id,
       break;
     case PROP_BIND:
       g_value_set_boolean (value, zmqsrc->bind);
+      break;
+    case PROP_IS_LIVE:
+      g_value_set_boolean (value, gst_base_src_is_live (GST_BASE_SRC (object)));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
